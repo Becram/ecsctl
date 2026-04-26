@@ -128,7 +128,7 @@ var configSetContextCmd = &cobra.Command{
 		if cmd.Flags().Changed("cluster") {
 			existing.Cluster = setContextCluster
 		}
-		if cmd.Flags().Changed("region") {
+		if cmd.Flags().Changed("region") || existing.Region == "" {
 			existing.Region = setContextRegion
 		}
 		if cmd.Flags().Changed("profile") {
@@ -143,9 +143,6 @@ var configSetContextCmd = &cobra.Command{
 
 		if existing.Cluster == "" {
 			return fmt.Errorf("--cluster is required")
-		}
-		if existing.Region == "" {
-			return fmt.Errorf("--region is required")
 		}
 
 		globalCfg.SetContext(name, existing)
@@ -183,7 +180,7 @@ var configDeleteContextCmd = &cobra.Command{
 
 func init() {
 	configSetContextCmd.Flags().StringVar(&setContextCluster, "cluster", "", "cluster name or ARN")
-	configSetContextCmd.Flags().StringVar(&setContextRegion, "region", "", "AWS region")
+	configSetContextCmd.Flags().StringVar(&setContextRegion, "region", "eu-west-1", "AWS region (default: eu-west-1)")
 	configSetContextCmd.Flags().StringVar(&setContextProfile, "profile", "", "AWS credentials profile (~/.aws/credentials)")
 	configSetContextCmd.Flags().StringVar(&setContextRole, "role-arn", "", "IAM role ARN to assume")
 	configSetContextCmd.Flags().StringVar(&setContextOutput, "output", "table", "default output format: table|wide|json|yaml")
