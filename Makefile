@@ -1,29 +1,20 @@
-BINARY    := ecsctl
-MODULE    := github.com/bikramdhoju/ecsctl
-VERSION   ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
-COMMIT    := $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
-DATE      := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
-LDFLAGS   := -ldflags "-X $(MODULE)/pkg/version.Version=$(VERSION) \
-                        -X $(MODULE)/pkg/version.Commit=$(COMMIT) \
-                        -X $(MODULE)/pkg/version.Date=$(DATE) \
-                        -s -w"
-
-.PHONY: build install test lint clean tidy
+MODULE  := github.com/bikramdhoju/ecsctl
+VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+COMMIT  := $(shell git rev-parse --short HEAD 2>/dev/null || echo none)
+DATE    := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 
 build:
-	go build $(LDFLAGS) -o $(BINARY) .
+	@go build -ldflags "-X $(MODULE)/pkg/version.Version=$(VERSION) \
+	                    -X $(MODULE)/pkg/version.Commit=$(COMMIT) \
+	                    -X $(MODULE)/pkg/version.Date=$(DATE) \
+	                    -s -w" -o ecsctl .
 
-install:
-	go install $(LDFLAGS) .
+deploy: build
+	@mv -v ecsctl /usr/local/bin/
+	@echo "Deployed Successfully"
 
 test:
-	go test ./...
-
-lint:
-	golangci-lint run ./...
-
-tidy:
-	go mod tidy
+	@go test ./...
 
 clean:
-	rm -f $(BINARY)
+	@rm -f ecsctl
