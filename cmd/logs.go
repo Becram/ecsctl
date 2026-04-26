@@ -12,12 +12,10 @@ import (
 )
 
 var (
-	logsCluster   string
 	logsContainer string
 	logsFollow    bool
 	logsTail      int32
 	logsSince     string
-	logsTimestamp bool
 )
 
 var logsCmd = &cobra.Command{
@@ -27,13 +25,9 @@ var logsCmd = &cobra.Command{
 	PersistentPreRunE: initClients,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		taskID := args[0]
-		cluster := logsCluster
-		if cluster == "" {
-			var err error
-			cluster, err = mustCluster()
-			if err != nil {
-				return err
-			}
+		cluster, err := mustCluster()
+		if err != nil {
+			return err
 		}
 
 		ctx := context.Background()
@@ -94,12 +88,10 @@ var logsCmd = &cobra.Command{
 }
 
 func init() {
-	logsCmd.Flags().StringVar(&logsCluster, "cluster", "", "cluster name or ARN (overrides context)")
 	logsCmd.Flags().StringVarP(&logsContainer, "container", "c", "", "container name (required if task has multiple containers)")
 	logsCmd.Flags().BoolVarP(&logsFollow, "follow", "f", false, "stream logs")
 	logsCmd.Flags().Int32Var(&logsTail, "tail", 100, "number of lines to show from the end")
 	logsCmd.Flags().StringVar(&logsSince, "since", "", "show logs since duration (e.g. 1h, 30m)")
-	logsCmd.Flags().BoolVar(&logsTimestamp, "timestamps", true, "prefix each line with timestamp")
 
 	rootCmd.AddCommand(logsCmd)
 }

@@ -30,23 +30,15 @@ var getClustersCmd = &cobra.Command{
 	},
 }
 
-var (
-	getServicesCluster string
-)
-
 var getServicesCmd = &cobra.Command{
 	Use:               "services",
 	Short:             "List ECS services",
 	Aliases:           []string{"service", "svc"},
 	PersistentPreRunE: initClients,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cluster := getServicesCluster
-		if cluster == "" {
-			var err error
-			cluster, err = mustCluster()
-			if err != nil {
-				return err
-			}
+		cluster, err := mustCluster()
+		if err != nil {
+			return err
 		}
 		services, err := globalClients.ListServices(context.Background(), cluster)
 		if err != nil {
@@ -61,7 +53,6 @@ var getServicesCmd = &cobra.Command{
 }
 
 var (
-	getTasksCluster string
 	getTasksService string
 	getTasksStatus  string
 )
@@ -72,13 +63,9 @@ var getTasksCmd = &cobra.Command{
 	Aliases:           []string{"task"},
 	PersistentPreRunE: initClients,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cluster := getTasksCluster
-		if cluster == "" {
-			var err error
-			cluster, err = mustCluster()
-			if err != nil {
-				return err
-			}
+		cluster, err := mustCluster()
+		if err != nil {
+			return err
 		}
 		tasks, err := globalClients.ListTasks(context.Background(), cluster, getTasksService, getTasksStatus)
 		if err != nil {
@@ -93,11 +80,6 @@ var getTasksCmd = &cobra.Command{
 }
 
 func init() {
-	// services flags
-	getServicesCmd.Flags().StringVar(&getServicesCluster, "cluster", "", "cluster name or ARN (overrides context)")
-
-	// tasks flags
-	getTasksCmd.Flags().StringVar(&getTasksCluster, "cluster", "", "cluster name or ARN (overrides context)")
 	getTasksCmd.Flags().StringVarP(&getTasksService, "service", "s", "", "filter by service name")
 	getTasksCmd.Flags().StringVar(&getTasksStatus, "status", "RUNNING", "desired status filter: RUNNING|STOPPED")
 

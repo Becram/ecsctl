@@ -11,110 +11,72 @@ go install github.com/bikramdhoju/ecsctl@latest
 Or build from source:
 
 ```bash
-git clone https://github.com/bikramdhoju/ecsctl
+git clone https://github.com/Becram/ecsctl
 cd ecsctl
 make install
 ```
 
-## Configuration
+## Usage
 
-```bash
-# Add a context (one per environment/cluster)
-ecsctl config set-context prod \
-  --cluster arn:aws:ecs:eu-west-1:123456789:cluster/main \
-  --region eu-west-1 \
-  --profile prod-sso
-
-# Switch context
-ecsctl config use-context prod
-
-# List all contexts
-ecsctl config get-contexts
+```
+ecsctl [command] --cluster <name> --profile <aws-profile> [flags]
 ```
 
-Config is stored at `~/.ecsctl/config.yaml`.
+### Global flags
 
-### Context fields
-
-| Field | Description |
-|---|---|
-| `--cluster` | Cluster name or full ARN |
-| `--region` | AWS region |
-| `--profile` | AWS credentials profile (`~/.aws/credentials`) |
-| `--role-arn` | IAM role to assume before calling ECS |
-| `--output` | Default output format for this context |
-
-### Global overrides
-
-Any context field can be overridden per-command:
-
-```bash
-ecsctl get services --profile staging --region eu-west-1 --cluster my-cluster
-```
+| Flag | Default | Description |
+|---|---|---|
+| `-c, --cluster` | | ECS cluster name or ARN |
+| `--profile` | | AWS credentials profile (`~/.aws/credentials`) |
+| `--region` | `eu-west-1` | AWS region |
+| `--role-arn` | | IAM role ARN to assume |
+| `-o, --output` | `table` | Output format: `table`, `wide`, `json`, `yaml` |
 
 ## Commands
 
 ### get
 
 ```bash
-ecsctl get clusters
-ecsctl get services
-ecsctl get services -c my-cluster
-ecsctl get tasks
-ecsctl get tasks -s my-service --status RUNNING
-ecsctl get tasks --status STOPPED
+ecsctl get clusters --profile prod
+ecsctl get services -c my-cluster --profile prod
+ecsctl get tasks   -c my-cluster --profile prod
+ecsctl get tasks   -c my-cluster --profile prod -s my-service
+ecsctl get tasks   -c my-cluster --profile prod --status STOPPED
 
 # Wide output — extra columns
-ecsctl get services -o wide
+ecsctl get services -c my-cluster --profile prod -o wide
 
 # JSON / YAML
-ecsctl get clusters -o json
-ecsctl get tasks -o yaml
+ecsctl get clusters --profile prod -o json
+ecsctl get tasks    -c my-cluster --profile prod -o yaml
 ```
 
 ### describe
 
 ```bash
-ecsctl describe cluster my-cluster
-ecsctl describe service my-service
-ecsctl describe service my-service -c my-cluster
-ecsctl describe task a1b2c3d4e5f6
+ecsctl describe cluster my-cluster  --profile prod
+ecsctl describe service my-service  -c my-cluster --profile prod
+ecsctl describe task    a1b2c3d4    -c my-cluster --profile prod
 ```
 
 ### logs
 
 ```bash
 # Last 100 lines
-ecsctl logs a1b2c3d4e5f6
+ecsctl logs a1b2c3d4 -c my-cluster --profile prod
 
 # Stream (follow)
-ecsctl logs a1b2c3d4e5f6 -f
+ecsctl logs a1b2c3d4 -c my-cluster --profile prod -f
 
 # Specific container (required when task has multiple)
-ecsctl logs a1b2c3d4e5f6 -c web
-
-# Last N lines
-ecsctl logs a1b2c3d4e5f6 --tail 200
+ecsctl logs a1b2c3d4 -c my-cluster --profile prod --container web
 
 # Since a duration
-ecsctl logs a1b2c3d4e5f6 --since 1h
-ecsctl logs a1b2c3d4e5f6 --since 30m -f
+ecsctl logs a1b2c3d4 -c my-cluster --profile prod --since 1h
+ecsctl logs a1b2c3d4 -c my-cluster --profile prod --since 30m -f
 ```
 
 Logs are fetched from CloudWatch using the `awslogs` configuration in the task definition.
-
-### config
-
-```bash
-ecsctl config view                        # Print all contexts
-ecsctl config get-contexts                # Table of contexts
-ecsctl config current-context            # Show active context name
-ecsctl config use-context staging        # Switch active context
-ecsctl config set-context prod \         # Create or update a context
-  --cluster my-cluster \
-  --region eu-west-1
-ecsctl config delete-context old-ctx     # Remove a context
-```
 
 ## AWS Permissions Required
 

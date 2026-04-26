@@ -11,11 +11,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ecs"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
-
-	"github.com/bikramdhoju/ecsctl/internal/config"
 )
 
-// Clients holds all AWS service clients for a single context.
+// Clients holds all AWS service clients.
 type Clients struct {
 	ECS     *ecs.Client
 	CWL     *cloudwatchlogs.Client
@@ -25,16 +23,15 @@ type Clients struct {
 	Cluster string
 }
 
-// NewClients builds AWS service clients from the resolved context.
-// profileOverride, if non-empty, takes precedence over ctx.AWSProfile.
-func NewClients(ctx context.Context, activeCtx *config.Context, profileOverride string) (*Clients, error) {
-	opts := []func(*awsconfig.LoadOptions) error{
-		awsconfig.WithRegion(activeCtx.Region),
+// NewClients builds AWS service clients from explicit parameters.
+// profile and roleARN are optional; region defaults to eu-west-1 if empty.
+func NewClients(ctx context.Context, cluster, region, profile, roleARN string) (*Clients, error) {
+	if region == "" {
+		region = "eu-west-1"
 	}
 
-	profile := activeCtx.AWSProfile
-	if profileOverride != "" {
-		profile = profileOverride
+	opts := []func(*awsconfig.LoadOptions) error{
+		awsconfig.WithRegion(region),
 	}
 	if profile != "" {
 		opts = append(opts, awsconfig.WithSharedConfigProfile(profile))
@@ -45,9 +42,9 @@ func NewClients(ctx context.Context, activeCtx *config.Context, profileOverride 
 		return nil, fmt.Errorf("load AWS config: %w", err)
 	}
 
-	if activeCtx.RoleARN != "" {
+	if roleARN != "" {
 		stsClient := sts.NewFromConfig(cfg)
-		provider := stscreds.NewAssumeRoleProvider(stsClient, activeCtx.RoleARN)
+		provider := stscreds.NewAssumeRoleProvider(stsClient, roleARN)
 		cfg.Credentials = sdkaws.NewCredentialsCache(provider)
 	}
 
@@ -56,7 +53,7 @@ func NewClients(ctx context.Context, activeCtx *config.Context, profileOverride 
 		CWL:     cloudwatchlogs.NewFromConfig(cfg),
 		SSM:     ssm.NewFromConfig(cfg),
 		STS:     sts.NewFromConfig(cfg),
-		Region:  activeCtx.Region,
-		Cluster: activeCtx.Cluster,
+		Region:  region,
+		Cluster: cluster,
 	}, nil
 }
